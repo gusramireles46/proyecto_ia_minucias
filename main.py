@@ -2,133 +2,188 @@ import mysql.connector as mysql
 import numpy as np
 import matplotlib.pyplot as plt
 
-def connect():
-    return mysql.connect(
-        host="localhost",
-        user="reconocedor",
-        passwd="@admin",
-        database="reconocedor"
-    )
+class Reconocedor:
+    def __init__(self, host, user, password, database):
+        self.conexion = self._connect(host, user, password, database)
 
-def entrenar(ruta_archivo):
-    letras = []
-    with open(ruta_archivo, 'r') as archivo:
-        contenido = archivo.read().strip().split("\n\n")
-        for bloque in contenido:
-            lineas = bloque.split("\n")
-            letra = lineas[0]
-            matriz = [list(map(int, fila.split())) for fila in lineas[1:]]
-            letras.append((letra, np.array(matriz)))
-    return letras
+    def _connect(self, host, user, password, database):
+        return mysql.connect(host=host, user=user, passwd=password, database=database)
 
-def calcular_frecuencias(letra, matriz, conexion):
-    x, y = np.where(matriz == 1)
-    nuevas_coordenadas = list(zip(x, y))
+    def entrenar(self, ruta_archivo):
+        letras = []
+        with open(ruta_archivo, 'r') as archivo:
+            contenido = archivo.read().strip().split("\n\n")
+            for bloque in contenido:
+                lineas = [linea.strip() for linea in bloque.split("\n") if linea.strip()]
+                if not lineas:
+                    continue
+                letra = lineas[0]
+                try:
+                    matriz = [list(map(int, fila.split())) for fila in lineas[1:]]
+                    letras.append((letra, np.array(matriz)))
+                except ValueError as e:
+                    print(f"Error al procesar bloque: {bloque}\nDetalles del error: {e}")
+        return letras
 
-    cursor = conexion.cursor(dictionary=True)
+    def calcular_frecuencias(self, letra, matriz):
+        x, y = np.where(matriz == 1)
+        nuevas_coordenadas = list(zip(x, y))
+        cursor = self.conexion.cursor(dictionary=True)
 
-    cursor.execute("SELECT id_letra FROM letra WHERE letra = %s;", (letra,))
-    result = cursor.fetchone()
+        cursor.execute("SELECT id_letra FROM letra WHERE letra = %s;", (letra,))
+        result = cursor.fetchone()
 
-    if result:
+        if result:
+            id_letra = result['id_letra']
+            cursor.execute(
+                "SELECT coorx, coory, frecuencia_acumulada FROM coordenada WHERE id_letra = %s;",
+                (id_letra,)
+            )
+            coordenadas_actuales = {
+                (fila['coorx'], fila['coory']): fila['frecuencia_acumulada']
+                for fila in cursor.fetchall()
+            }
+
+            for coord in nuevas_coordenadas:
+                coord = (int(coord[0]), int(coord[1]))
+                if coord in coordenadas_actuales:
+                    nueva_frecuencia = coordenadas_actuales[coord] + 1
+                    cursor.execute(
+                        "UPDATE coordenada SET frecuencia_acumulada = %s WHERE id_letra = %s AND coorx = %s AND coory = %s;",
+                        (nueva_frecuencia, id_letra, coord[0], coord[1])
+                    )
+                else:
+                    cursor.execute(
+                        "INSERT INTO coordenada (coorx, coory, frecuencia_acumulada, frecuencia_relativa, id_letra) VALUES (%s, %s, %s, %s, %s);",
+                        (coord[0], coord[1], 1, 0, id_letra)
+                    )
+        else:
+            cursor.execute("INSERT INTO letra (letra) VALUES (%s);", (letra,))
+            id_letra = cursor.lastrowid
+
+            for coord in nuevas_coordenadas:
+                coord = (int(coord[0]), int(coord[1]))
+                cursor.execute(
+                    "INSERT INTO coordenada (coorx, coory, frecuencia_acumulada, frecuencia_relativa, id_letra) VALUES (%s, %s, %s, %s, %s);",
+                    (coord[0], coord[1], 1, 1 / len(nuevas_coordenadas), id_letra)
+                )
+
+        self.recalcular_frecuencia_relativa(id_letra)
+
+    def recalcular_frecuencia_relativa(self, id_letra):
+        cursor = self.conexion.cursor(dictionary=True)
+        cursor.execute(
+            "SELECT SUM(frecuencia_acumulada) AS total_acumulado FROM coordenada WHERE id_letra = %s;",
+            (id_letra,)
+        )
+        total_acumulado = cursor.fetchone()['total_acumulado']
+
+        if total_acumulado > 0:
+            cursor.execute(
+                "UPDATE coordenada SET frecuencia_relativa = frecuencia_acumulada / %s WHERE id_letra = %s;",
+                (float(total_acumulado), id_letra)
+            )
+            self.conexion.commit()
+
+    def mostrar_matriz_letra(self, letra):
+        cursor = self.conexion.cursor(dictionary=True)
+        cursor.execute("SELECT id_letra FROM letra WHERE letra = %s;", (letra,))
+        result = cursor.fetchone()
+
+        if not result:
+            print(f"La letra '{letra}' no está registrada en la base de datos.")
+            return
+
         id_letra = result['id_letra']
-
         cursor.execute(
             "SELECT coorx, coory, frecuencia_acumulada FROM coordenada WHERE id_letra = %s;",
             (id_letra,)
         )
-        coordenadas_actuales = {
-            (fila['coorx'], fila['coory']): fila['frecuencia_acumulada']
-            for fila in cursor.fetchall()
-        }
+        data = cursor.fetchall()
 
-        for coord in nuevas_coordenadas:
-            coord = (int(coord[0]), int(coord[1]))
-            if coord in coordenadas_actuales:
-                nueva_frecuencia = coordenadas_actuales[coord] + 1
-                cursor.execute(
-                    "UPDATE coordenada SET frecuencia_acumulada = %s WHERE id_letra = %s AND coorx = %s AND coory = %s;",
-                    (nueva_frecuencia, id_letra, coord[0], coord[1])
-                )
-            else:
-                cursor.execute(
-                    "INSERT INTO coordenada (coorx, coory, frecuencia_acumulada, frecuencia_relativa, id_letra) VALUES (%s, %s, %s, %s, %s);",
-                    (coord[0], coord[1], 1, 0, id_letra)
-                )
-    else:
-        cursor.execute("INSERT INTO letra (letra) VALUES (%s);", (letra,))
-        id_letra = cursor.lastrowid
+        matriz = np.full((24, 24), 255)
 
-        for coord in nuevas_coordenadas:
-            coord = (int(coord[0]), int(coord[1]))
+        if data:
+            max_frecuencia = max(fila['frecuencia_acumulada'] for fila in data)
+            min_frecuencia = min(fila['frecuencia_acumulada'] for fila in data if fila['frecuencia_acumulada'] > 0)
+
+            for fila in data:
+                x, y = fila['coorx'], fila['coory']
+                frecuencia = fila['frecuencia_acumulada']
+                escala_gris = 200 - int(200 * (frecuencia - min_frecuencia) / (max_frecuencia - min_frecuencia))
+                matriz[x, y] = max(escala_gris, 50)
+
+        plt.imshow(matriz, cmap="gray", interpolation="nearest")
+        plt.title(f"Frecuencias para la letra '{letra}'")
+        plt.colorbar(label="Escala de grises (frecuencia)")
+        plt.show()
+
+    def predecir_letra(self, matriz):
+        cursor = self.conexion.cursor(dictionary=True)
+        cursor.execute("SELECT id_letra, letra FROM letra;")
+        letras = cursor.fetchall()
+        puntajes = {}
+
+        for letra in letras:
+            id_letra = letra['id_letra']
+            caracter = letra['letra']
+
             cursor.execute(
-                "INSERT INTO coordenada (coorx, coory, frecuencia_acumulada, frecuencia_relativa, id_letra) VALUES (%s, %s, %s, %s, %s);",
-                (coord[0], coord[1], 1, 1 / len(nuevas_coordenadas), id_letra)
+                "SELECT coorx, coory, frecuencia_acumulada FROM coordenada WHERE id_letra = %s;",
+                (id_letra,)
+            )
+            coordenadas = cursor.fetchall()
+
+            frecuencia_por_coordenada = {
+                (fila['coorx'], fila['coory']): fila['frecuencia_acumulada'] for fila in coordenadas
+            }
+
+            puntaje = sum(
+                frecuencia_por_coordenada.get((x, y), 0)
+                for x in range(matriz.shape[0])
+                for y in range(matriz.shape[1])
+                if matriz[x, y] == 1
             )
 
-    recalcular_frecuencia_relativa(id_letra, conexion)
+            puntajes[caracter] = puntaje
 
-def recalcular_frecuencia_relativa(id_letra, conexion):
-    cursor = conexion.cursor(dictionary=True)
+        return max(puntajes, key=puntajes.get)
 
-    cursor.execute(
-        "SELECT SUM(frecuencia_acumulada) AS total_acumulado FROM coordenada WHERE id_letra = %s;",
-        (id_letra,)
-    )
-    total_acumulado = cursor.fetchone()['total_acumulado']
+    def predecir_frase(self, ruta_archivo):
+        bloques = self.leer_matriz_completa(ruta_archivo)
+        return ''.join(self.predecir_letra(bloque) for bloque in bloques)
 
-    if total_acumulado > 0:
-        cursor.execute(
-            "UPDATE coordenada SET frecuencia_relativa = frecuencia_acumulada / %s WHERE id_letra = %s;",
-            (float(total_acumulado), id_letra)
-        )
-        conexion.commit()
+    @staticmethod
+    def leer_matriz_completa(ruta_archivo):
+        with open(ruta_archivo, 'r') as archivo_leido:
+            lineas = archivo_leido.read().strip().split('\n')
 
-def mostrar_matriz_letra(letra, conexion):
-    cursor = conexion.cursor(dictionary=True)
+        bloques = []
+        bloque_actual = []
 
-    cursor.execute("SELECT id_letra FROM letra WHERE letra = %s;", (letra,))
-    result = cursor.fetchone()
+        for linea in lineas:
+            if linea.strip() == "x":
+                if bloque_actual:
+                    bloques.append(np.array(bloque_actual))
+                    bloque_actual = []
+            else:
+                fila = list(map(int, linea.strip().split()))
+                bloque_actual.append(fila)
 
-    if not result:
-        print(f"La letra '{letra}' no está registrada en la base de datos.")
-        return
+        if bloque_actual:
+            bloques.append(np.array(bloque_actual))
 
-    id_letra = result['id_letra']
+        return bloques
 
-    cursor.execute(
-        "SELECT coorx, coory, frecuencia_acumulada FROM coordenada WHERE id_letra = %s;",
-        (id_letra,)
-    )
-    data = cursor.fetchall()
+if __name__ == "__main__":
+    reconocedor = Reconocedor("localhost", "reconocedor", "@admin", "reconocedor")
+    archivos = ["letra_m", "letra_a", "letra_s", "letra_e", "letra_r", "letra_o"]
 
-    matriz = np.full((24, 24), 255)
+    for archivo in archivos:
+        letras_matriz = reconocedor.entrenar(archivo + ".txt")
+        for letra, matriz in letras_matriz:
+            reconocedor.calcular_frecuencias(letra, matriz)
 
-    if data:
-        max_frecuencia = max(fila['frecuencia_acumulada'] for fila in data)
-        min_frecuencia = min(fila['frecuencia_acumulada'] for fila in data if fila['frecuencia_acumulada'] > 0)
-
-        # print(f"Max frecuencia: {max_frecuencia}, Min frecuencia: {min_frecuencia}")
-
-        for fila in data:
-            x, y = fila['coorx'], fila['coory']
-            frecuencia = fila['frecuencia_acumulada']
-            escala_gris = 200 - int(200 * (frecuencia - min_frecuencia) / (max_frecuencia - min_frecuencia))
-            matriz[x, y] = max(escala_gris, 50)
-
-    plt.imshow(matriz, cmap="gray", interpolation="nearest")
-    plt.title(f"Frecuencias para la letra '{letra}'")
-    plt.colorbar(label="Escala de grises (frecuencia)")
-    plt.show()
-
-conexion = connect()
-archivos = ["S.txt", "A.txt"]
-
-for archivo in archivos:
-    letras_matriz = entrenar(archivo)
-    for letra, matriz in letras_matriz:
-        calcular_frecuencias(letra, matriz, conexion)
-
-
-mostrar_matriz_letra("s", conexion)
-mostrar_matriz_letra("a", conexion)
+    reconocedor.mostrar_matriz_letra("m")
+    frase = reconocedor.predecir_frase("letravarias.txt")
+    print(f"Frase predicha: {frase}")
