@@ -10,12 +10,15 @@ if __name__ == "__main__":
     #     for letra, matriz in letras_matriz:
     #         reconocedor.calcular_frecuencias(letra, matriz)
 
-    reconocedor.mostrar_matriz_letra("m")
-    reconocedor.mostrar_matriz_letra("a")
-    reconocedor.mostrar_matriz_letra("s")
-    reconocedor.mostrar_matriz_letra("e")
-    reconocedor.mostrar_matriz_letra("r")
-    reconocedor.mostrar_matriz_letra("o")
+    # reconocedor.mostrar_matriz_letra("m")
+    # reconocedor.mostrar_matriz_letra("a")
+    # reconocedor.mostrar_matriz_letra("s")
+    # reconocedor.mostrar_matriz_letra("e")
+    # reconocedor.mostrar_matriz_letra("r")
+    # reconocedor.mostrar_matriz_letra("o")
 
-    # frase = reconocedor.predecir_frase("letravarias.txt")
-    # print(f"Frase predicha: {frase}")
+    frase = reconocedor.predecir_frase("archivos_lectura/letrax.txt")
+    if len(frase) > 1:
+        print(f"Frase: {frase}")
+    else:
+        print(f"Letra: {frase}")
