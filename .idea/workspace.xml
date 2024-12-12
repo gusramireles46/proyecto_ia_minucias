@@ -1,22 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="ChangeListManager">
     <list default="true" id="c1c954ef-b8a8-46f1-bad9-3a5e7d4acbdb" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/839584cd-d88f-41dd-9797-bf3fa194d653.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/839584cd-d88f-41dd-9797-bf3fa194d653/storage_v2/_src_/schema/information_schema.FNRwLQ.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/839584cd-d88f-41dd-9797-bf3fa194d653/storage_v2/_src_/schema/performance_schema.kIw0nw.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/839584cd-d88f-41dd-9797-bf3fa194d653/storage_v2/_src_/schema/reconocedor.xYXkjQ.meta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/proyecto_ia.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/reconocedor_minucias.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sqldialects.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Reconocedor.py" beforeDir="false" afterPath="$PROJECT_DIR$/Reconocedor.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/archivos_entrenamiento/letra_m.txt" beforeDir="false" afterPath="$PROJECT_DIR$/archivos_entrenamiento/letra_m.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -41,6 +31,10 @@
     "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "master",
     "last_opened_file_path": "C:/Users/gusra/Documents/Python/reconocedor_minucias",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
     "settings.editor.selected.configurable": "preferences.general",
     "vue.rearranger.settings.migration": "true"
@@ -67,7 +61,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1734036420173</updated>
-      <workItem from="1734036421586" duration="198000" />
+      <workItem from="1734036421586" duration="308000" />
     </task>
     <servers />
   </component>
