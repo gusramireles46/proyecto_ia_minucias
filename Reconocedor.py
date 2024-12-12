@@ -123,6 +123,7 @@ class Reconocedor:
         cursor.execute("SELECT id_letra, letra FROM letra;")
         letras = cursor.fetchall()
         puntajes = {}
+        mejor_matriz = np.full(matriz.shape, 255)
 
         for letra in letras:
             id_letra = letra['id_letra']
@@ -138,16 +139,28 @@ class Reconocedor:
                 (fila['coorx'], fila['coory']): fila['frecuencia_acumulada'] for fila in coordenadas
             }
 
-            puntaje = sum(
-                frecuencia_por_coordenada.get((x, y), 0)
-                for x in range(matriz.shape[0])
-                for y in range(matriz.shape[1])
-                if matriz[x, y] == 1
-            )
+            puntaje = 0
+            matriz_coincidencia = np.full(matriz.shape, 255)
+
+            for x in range(matriz.shape[0]):
+                for y in range(matriz.shape[1]):
+                    if matriz[x, y] == 1 and (x, y) in frecuencia_por_coordenada:
+                        puntaje += frecuencia_por_coordenada[(x, y)]
+                        matriz_coincidencia[x, y] = 0
 
             puntajes[caracter] = puntaje
 
-        return max(puntajes, key=puntajes.get)
+            if puntaje == max(puntajes.values()):
+                mejor_matriz = matriz_coincidencia
+
+        letra_predicha = max(puntajes, key=puntajes.get)
+
+        plt.imshow(mejor_matriz, cmap="gray", interpolation="nearest")
+        plt.title(f"Coincidencias para la letra '{letra_predicha}'")
+        plt.colorbar(label="Escala de grises (coincidencias)")
+        plt.show()
+
+        return letra_predicha
 
     def predecir_frase(self, ruta_archivo):
         bloques = self.leer_matriz_completa(ruta_archivo)
