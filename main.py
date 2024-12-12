@@ -17,7 +17,7 @@ if __name__ == "__main__":
     reconocedor.mostrar_matriz_letra("r")
     reconocedor.mostrar_matriz_letra("o")
 
-    frase = reconocedor.predecir_frase("archivos_lectura/letrax.txt")
+    frase = reconocedor.predecir_frase("archivos_lectura/letravarias.txt")
     if len(frase) > 1:
         print(f"Frase: {frase}")
     else:
