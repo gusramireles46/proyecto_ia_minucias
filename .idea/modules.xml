@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/proyecto_ia.iml" filepath="$PROJECT_DIR$/.idea/proyecto_ia.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/reconocedor_minucias.iml" filepath="$PROJECT_DIR$/.idea/reconocedor_minucias.iml" />
     </modules>
   </component>
 </project>

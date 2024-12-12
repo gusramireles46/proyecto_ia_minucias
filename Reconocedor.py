@@ -1,3 +1,9 @@
+"""
+PROYECTO PARA INTELIGENCIA ARTIFICIAL
+* ARREOLA GARCIA VANESSA FERNANDA   21031024
+* RAMIREZ MIRELES GUSTAVO           21030017
+"""
+
 import mysql.connector as mysql
 import numpy as np
 import matplotlib.pyplot as plt
